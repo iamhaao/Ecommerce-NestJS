@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -24,6 +26,7 @@ export class OrdersService {
     private readonly orderRepository: Repository<Order>,
     @InjectRepository(OrdersProducts)
     private readonly orderProductRepository: Repository<OrdersProducts>,
+    @Inject(forwardRef(() => ProductsService))
     private readonly prorductService: ProductsService,
   ) {}
   async create(createOrderDto: CreateOrderDto, user: User): Promise<Order> {
@@ -154,5 +157,12 @@ export class OrdersService {
     order = await this.orderRepository.save(order);
     await this.stockUpdate(order, OrderStatus.CANCEL);
     return order;
+  }
+
+  async findOneByProductId(id: number) {
+    return await this.orderProductRepository.findOne({
+      where: { product: { id: id } },
+      relations: { product: true },
+    });
   }
 }
